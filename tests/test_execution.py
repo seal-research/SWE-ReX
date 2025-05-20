@@ -48,6 +48,22 @@ async def test_execute_command(remote_runtime: RemoteRuntime):
     assert (await remote_runtime.execute(C(command="echo 'hello world'", shell=True))).stdout == "hello world\n"
 
 
+async def test_execute_command_with_empty_string(remote_runtime: RemoteRuntime):
+    assert (await remote_runtime.execute(C(command="echo ''", shell=True))).stdout == "\n"
+
+
+async def test_execute_command_with_empty_string_in_session(runtime_with_default_session: RemoteRuntime):
+    assert (await runtime_with_default_session.run_in_session(A(command="echo ''", check="raise"))).output == "\n"
+
+
+async def test_execute_command_with_leading_space_output(remote_runtime: RemoteRuntime):
+    assert (await remote_runtime.execute(C(command="echo '\n \nhello world'", shell=True))).stdout == "\n \nhello world\n"
+
+
+async def test_execute_command_with_leading_space_in_session(runtime_with_default_session: RemoteRuntime):
+    assert (await runtime_with_default_session.run_in_session(A(command="echo '\n \nhello\nworld'", check="raise"))).output == "\n \nhello\nworld\n"
+
+
 async def test_execute_command_shell_false(remote_runtime: RemoteRuntime):
     assert (await remote_runtime.execute(C(command=["echo", "hello world"], shell=False))).stdout == "hello world\n"
 
