@@ -297,7 +297,7 @@ class BashSession(Session):
             # Bashlex is very buggy and can throw a variety of errors, including
             # ParsingErrors, NotImplementedErrors, TypeErrors, possibly more. So we catch them all
             self.logger.error("Bashlex fail: %s", e)
-            action.command += f"\n TMPEXITCODE=$? ; sleep 0.1; echo '{self._UNIQUE_STRING}' ; (exit $TMPEXITCODE)"
+            action.command += f"\n TMPEXITCODE=$? ; sleep 0.1; echo -n '{self._UNIQUE_STRING}' ; (exit $TMPEXITCODE)"
             fallback_terminator = True
         else:
             action.command = " ; ".join(individual_commands)
