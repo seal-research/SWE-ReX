@@ -57,19 +57,25 @@ async def test_execute_command_with_empty_string_in_session(runtime_with_default
 
 
 async def test_execute_command_with_leading_space_output(remote_runtime: RemoteRuntime):
-    assert (await remote_runtime.execute(C(command="echo '\n \nhello world'", shell=True))).stdout == "\n \nhello world\n"
+    assert (
+        await remote_runtime.execute(C(command="echo '\n \nhello world'", shell=True))
+    ).stdout == "\n \nhello world\n"
+
 
 async def test_execute_command_with_echon(remote_runtime: RemoteRuntime):
     assert (await remote_runtime.execute(C(command="echo -n 'hello world'", shell=True))).stdout == "hello world"
     assert (await remote_runtime.execute(C(command="echo -n 'hello world\n'", shell=True))).stdout == "hello world\n"
     assert (await remote_runtime.execute(C(command="echo -n '\nhello world'", shell=True))).stdout == "\nhello world"
 
+
 async def test_execute_command_with_newline_in_session(runtime_with_default_session: RemoteRuntime):
     assert (await runtime_with_default_session.run_in_session(A(command="printf '\nx'", check="raise"))).output == "\nx"
 
 
 async def test_execute_command_with_many_newlines_in_session(runtime_with_default_session: RemoteRuntime):
-    assert (await runtime_with_default_session.run_in_session(A(command="printf '\n\nx\n\n\n'", check="raise"))).output == "\n\nx\n\n\n"
+    assert (
+        await runtime_with_default_session.run_in_session(A(command="printf '\n\nx\n\n\n'", check="raise"))
+    ).output == "\n\nx\n\n\n"
 
 
 async def test_execute_command_with_whitespace_in_session(runtime_with_default_session: RemoteRuntime):
@@ -77,7 +83,9 @@ async def test_execute_command_with_whitespace_in_session(runtime_with_default_s
 
 
 async def test_execute_command_with_leading_space_in_session(runtime_with_default_session: RemoteRuntime):
-    assert (await runtime_with_default_session.run_in_session(A(command="echo '\n \nhello\nworld'", check="raise"))).output == "\n \nhello\nworld\n"
+    assert (
+        await runtime_with_default_session.run_in_session(A(command="echo '\n \nhello\nworld'", check="raise"))
+    ).output == "\n \nhello\nworld\n"
 
 
 async def test_execute_command_shell_false(remote_runtime: RemoteRuntime):
