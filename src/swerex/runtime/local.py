@@ -93,7 +93,7 @@ def _split_bash_command(inpt: str) -> list[str]:
 
 def _strip_control_chars(s: str) -> str:
     ansi_escape = re.compile(r"\x1B[@-_][0-?]*[ -/]*[@-~]")
-    return ansi_escape.sub("", s).replace("\r\n", "\n").replace("\r", "")
+    return ansi_escape.sub("", s).replace("\r\n", "\n")
 
 
 def _check_bash_command(command: str) -> None:
