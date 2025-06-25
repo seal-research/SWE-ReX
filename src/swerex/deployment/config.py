@@ -190,8 +190,15 @@ class DaytonaDeploymentConfig(BaseModel):
 
     api_key: str = Field(default="", description="Daytona API key for authentication")
     target: str = Field(default="us", description="Daytona target region (us, eu, etc.)")
-    language: str = Field(default="python", description="Programming language for the sandbox")
     port: int = Field(default=8000, description="Port to expose for the SWE Rex server")
+    container_timeout: float = Field(default=60 * 15, description="Timeout for the container")
+    runtime_timeout: float = Field(default=60, description="Timeout for the runtime")
+    image: str = Field(default="python:3.11", description="Image to use for the sandbox")
+
+    def get_deployment(self) -> AbstractDeployment:
+        from swerex.deployment.daytona import DaytonaDeployment
+
+        return DaytonaDeployment.from_config(self)
 
 
 DeploymentConfig = (

@@ -1,10 +1,14 @@
-import json
 import logging
 import time
 import uuid
 from typing import Any
 
-from daytona_sdk import CreateWorkspaceParams, Daytona, DaytonaConfig, SessionExecuteRequest
+from daytona_sdk import (
+    CreateSandboxFromImageParams,
+    Daytona,
+    DaytonaConfig,
+    SessionExecuteRequest,
+)
 from typing_extensions import Self
 
 from swerex import PACKAGE_NAME, REMOTE_EXECUTABLE_NAME
@@ -96,9 +100,10 @@ class DaytonaDeployment(AbstractDeployment):
         self.logger.info("Creating Daytona sandbox...")
 
         # Create workspace with specified parameters
-        params = CreateWorkspaceParams(
-            language=self._config.language, id=self._config.workspace_id or f"swerex-{uuid.uuid4().hex[:8]}"
+        params = CreateSandboxFromImageParams(
+            image=self._config.image,
         )
+        assert self._daytona is not None
 
         self._workspace = self._daytona.create(params)
         self._workspace_id = self._workspace.id
@@ -115,7 +120,7 @@ class DaytonaDeployment(AbstractDeployment):
         session_id = f"swerex-server-{uuid.uuid4().hex[:8]}"
         self._workspace.process.create_session(session_id)
 
-        req = SessionExecuteRequest(command=command, var_async=True)
+        req = SessionExecuteRequest(command=command)
         # Execute the command in the session
         response = self._workspace.process.execute_session_command(session_id, req)
         if response.exit_code != 0:
@@ -138,12 +143,12 @@ class DaytonaDeployment(AbstractDeployment):
 
     async def _get_sandbox_host(self) -> str:
         """Get the host address of the Daytona sandbox."""
-        metadata = json.loads(self._workspace.info().provider_metadata)
-        nodeDomain = metadata["nodeDomain"]
-        if nodeDomain:
-            return nodeDomain
+        assert self._workspace is not None
+        runner_domain = self._workspace.runner_domain
+        if runner_domain is not None:
+            return runner_domain
         else:
-            msg = "No node domain found for Daytona sandbox"
+            msg = "No runner domain found for Daytona sandbox"
             raise RuntimeError(msg)
 
     async def stop(self):
@@ -155,7 +160,7 @@ class DaytonaDeployment(AbstractDeployment):
         if self._workspace is not None and self._daytona is not None:
             try:
                 self.logger.info(f"Removing Daytona sandbox with ID: {self._workspace_id}")
-                self._daytona.remove(self._workspace)
+                self._daytona.delete(self._workspace)
                 self.logger.info("Daytona sandbox removed successfully")
             except Exception as e:
                 self.logger.error(f"Failed to remove Daytona sandbox: {str(e)}")
