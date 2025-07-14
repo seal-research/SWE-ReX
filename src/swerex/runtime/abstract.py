@@ -29,6 +29,7 @@ class CreateBashSessionRequest(BaseModel):
     session: str = "default"
     session_type: Literal["bash"] = "bash"
     startup_timeout: float = 1.0
+    sandbox_path: str | None = None
     """The timeout for the startup commands."""
 
 
