@@ -1,8 +1,6 @@
 import logging
-import shlex
 import subprocess
 import time
-import uuid
 from typing import Any
 
 from typing_extensions import Self
@@ -13,20 +11,10 @@ from swerex.deployment.config import ApptainerDeploymentConfig
 from swerex.deployment.hooks.abstract import CombinedDeploymentHook, DeploymentHook
 from swerex.exceptions import DeploymentNotStartedError, DockerPullError
 from swerex.runtime.abstract import IsAliveResponse
-from swerex.runtime.config import LocalRuntimeConfig
 from swerex.runtime.apptainer import ApptainerRuntime
-from swerex.utils.free_port import find_free_port
 from swerex.utils.log import get_logger
-from swerex.utils.wait import _wait_until_alive
 
 __all__ = ["ApptainerDeployment", "ApptainerDeploymentConfig"]
-
-# def _pull_image(image: str) -> bytes:
-#     try:
-#         return "dev/sif_base/"+image.replace(":", "").replace("/", "_")+".sif", subprocess.check_output(["apptainer", "pull", "dev/sif_base/"+image.replace(":", "").replace("/", "_")+".sif", image], stderr=subprocess.PIPE)
-#     except subprocess.CalledProcessError as e:
-#         # e.stderr contains the error message as bytes
-#         raise subprocess.CalledProcessError(e.returncode, e.cmd, e.output, e.stderr) from None
 
 class ApptainerDeployment(AbstractDeployment):
     def __init__(
