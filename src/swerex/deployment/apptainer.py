@@ -5,6 +5,8 @@ from typing import Any
 
 from typing_extensions import Self
 
+import shutil
+
 from swerex import PACKAGE_NAME, REMOTE_EXECUTABLE_NAME
 from swerex.deployment.abstract import AbstractDeployment
 from swerex.deployment.config import ApptainerDeploymentConfig
@@ -13,6 +15,8 @@ from swerex.exceptions import DeploymentNotStartedError, DockerPullError
 from swerex.runtime.abstract import IsAliveResponse
 from swerex.runtime.apptainer import ApptainerRuntime
 from swerex.utils.log import get_logger
+
+APPTAINER_BASH = "apptainer" if shutil.which("apptainer") else "singularity"
 
 __all__ = ["ApptainerDeployment", "ApptainerDeploymentConfig"]
 
@@ -59,7 +63,7 @@ class ApptainerDeployment(AbstractDeployment):
         try:
             self.sif_file = self._config.image.replace(":", "_").replace("/", "_")+".sif"
             self.sif_file = str(self._config.apptainer_output_dir / self.sif_file)
-            subprocess.check_output(["apptainer", "pull", self.sif_file, self._config.image], stderr=subprocess.PIPE)
+            subprocess.check_output([APPTAINER_BASH, "pull", self.sif_file, self._config.image], stderr=subprocess.PIPE)
         except subprocess.CalledProcessError as e:
             msg = f"Failed to pull image {self._config.image}. "
             msg += f"Error: {e.stderr.decode()}"
@@ -74,7 +78,7 @@ class ApptainerDeployment(AbstractDeployment):
         )
 
         result = subprocess.run(
-                ["apptainer", "build", "--sandbox", self.sandbox_path, self.sif_file],
+                [APPTAINER_BASH, "build", "--sandbox", self.sandbox_path, self.sif_file],
                 # cwd=str(build_dir),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
