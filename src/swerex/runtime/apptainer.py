@@ -52,6 +52,8 @@ from swerex.runtime.abstract import (
 from swerex.runtime.config import LocalRuntimeConfig
 from swerex.utils.log import get_logger
 
+APPTAINER_BASH = "apptainer" if shutil.which("apptainer") else "singularity"
+
 __all__ = ["LocalRuntime", "BashSession"]
 
 
@@ -159,8 +161,8 @@ class BashSession(Session):
         if not sandbox_path:
             raise ValueError("sandbox_path must be provided in the request for Apptainer.")
             
-        shell_cmd = f'apptainer exec --writable {sandbox_path} bash'
-        # shell_cmd = f'apptainer shell --writable {sandbox_path}'
+        shell_cmd = f'{APPTAINER_BASH} exec --writable {sandbox_path} bash'
+        # shell_cmd = f'{APPTAINER_BASH} shell --writable {sandbox_path}'
 
         self._shell = pexpect.spawn(
             shell_cmd,  # Use the Apptainer command here
