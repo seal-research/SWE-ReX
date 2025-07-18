@@ -228,6 +228,7 @@ DeploymentConfig = (
     | FargateDeploymentConfig
     | RemoteDeploymentConfig
     | DummyDeploymentConfig
+    | DaytonaDeploymentConfig
     | ApptainerDeploymentConfig
 )
 """Union of all deployment configurations. Useful for type hints."""
