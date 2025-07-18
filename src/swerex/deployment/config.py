@@ -1,4 +1,4 @@
-from pathlib import PurePath
+from pathlib import PurePath, Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -201,6 +201,26 @@ class DaytonaDeploymentConfig(BaseModel):
         return DaytonaDeployment.from_config(self)
 
 
+class ApptainerDeploymentConfig(BaseModel):
+    """Configuration for running locally in a Docker container."""
+
+    image: str = "docker://wellslu/apptainer_base:latest"
+    """The name of the docker image to use."""
+    startup_timeout: float = 300.0
+    """Whether to remove the image after it has stopped."""
+    apptainer_output_dir: Path | None = None
+    """The directory to use for the python standalone."""
+
+    type: Literal["apptainer"] = "apptainer"
+    """Discriminator for (de)serialization/CLI. Do not change."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    def get_deployment(self) -> AbstractDeployment:
+        from swerex.deployment.apptainer import ApptainerDeployment
+
+        return ApptainerDeployment.from_config(self)
+
 DeploymentConfig = (
     LocalDeploymentConfig
     | DockerDeploymentConfig
@@ -209,6 +229,7 @@ DeploymentConfig = (
     | RemoteDeploymentConfig
     | DummyDeploymentConfig
     | DaytonaDeploymentConfig
+    | ApptainerDeploymentConfig
 )
 """Union of all deployment configurations. Useful for type hints."""
 
