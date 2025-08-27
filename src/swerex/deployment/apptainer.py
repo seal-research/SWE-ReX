@@ -5,7 +5,7 @@ from typing import Any
 
 from typing_extensions import Self
 
-import shutil
+import shutil, os
 
 from swerex import PACKAGE_NAME, REMOTE_EXECUTABLE_NAME
 from swerex.deployment.abstract import AbstractDeployment
@@ -63,6 +63,11 @@ class ApptainerDeployment(AbstractDeployment):
         try:
             self.sif_file = self._config.image.replace(":", "_").replace("/", "_")+".sif"
             self.sif_file = str(self._config.apptainer_output_dir / self.sif_file)
+            # remove existing sif file if it exists
+            if os.path.exists(self.sif_file):
+                self.logger.info(f"Removing existing image file {self.sif_file}")
+                os.remove(self.sif_file)
+            # pull the image
             subprocess.check_output([APPTAINER_BASH, "pull", self.sif_file, self._config.image], stderr=subprocess.PIPE)
         except subprocess.CalledProcessError as e:
             msg = f"Failed to pull image {self._config.image}. "
@@ -73,10 +78,15 @@ class ApptainerDeployment(AbstractDeployment):
     def _build_image(self) -> str:
         """Builds image, returns image ID."""
         self.logger.info(
-            f"Building image {self._config.image} to install a python to {self._config.apptainer_output_dir}. "
+            f"Building image {self._config.image} to install to {self._config.apptainer_output_dir}. "
             "This might take a while (but you only have to do it once). "
         )
-
+        # delete existing sandbox if it exists
+        if os.path.exists(self.sandbox_path):
+            self.logger.info(f"Removing existing sandbox {self.sandbox_path}")
+            shutil.rmtree(self.sandbox_path)
+            
+        # create sandbox directory
         result = subprocess.run(
                 [APPTAINER_BASH, "build", "--sandbox", self.sandbox_path, self.sif_file],
                 # cwd=str(build_dir),
