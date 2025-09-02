@@ -216,6 +216,8 @@ class ApptainerDeploymentConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    g2: bool = False
+
     def get_deployment(self) -> AbstractDeployment:
         from swerex.deployment.apptainer import ApptainerDeployment
 

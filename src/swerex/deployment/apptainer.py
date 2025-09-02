@@ -37,7 +37,6 @@ class ApptainerDeployment(AbstractDeployment):
         self.logger = logger or get_logger("rex-deploy")
         self._runtime_timeout = 0.15
         self._hooks = CombinedDeploymentHook()
-        self.sandbox_path = None
 
     def add_hook(self, hook: DeploymentHook):
         self._hooks.add_hook(hook)
@@ -62,13 +61,22 @@ class ApptainerDeployment(AbstractDeployment):
         self._hooks.on_custom_step("Pulling apptainer image")
         try:
             self.sif_file = self._config.image.replace(":", "_").replace("/", "_")+".sif"
-            self.sif_file = str(self._config.apptainer_output_dir / self.sif_file)
             # remove existing sif file if it exists
-            if os.path.exists(self.sif_file):
-                self.logger.info(f"Removing existing image file {self.sif_file}")
-                os.remove(self.sif_file)
+            sif_file_check = str(self._config.apptainer_output_dir / self.sif_file)
+            if os.path.exists(sif_file_check):
+                self.logger.info(f"Removing existing image file {sif_file_check}")
+                os.remove(sif_file_check)
             # pull the image
-            subprocess.check_output([APPTAINER_BASH, "pull", self.sif_file, self._config.image], stderr=subprocess.PIPE)
+            result = subprocess.run(
+                [APPTAINER_BASH, "pull", self.sif_file, self._config.image],
+                cwd=str(self._config.apptainer_output_dir),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            print(result.stdout)
+            print(result.stderr)
+
         except subprocess.CalledProcessError as e:
             msg = f"Failed to pull image {self._config.image}. "
             msg += f"Error: {e.stderr.decode()}"
@@ -82,26 +90,41 @@ class ApptainerDeployment(AbstractDeployment):
             "This might take a while (but you only have to do it once). "
         )
         # delete existing sandbox if it exists
-        if os.path.exists(self.sandbox_path):
-            self.logger.info(f"Removing existing sandbox {self.sandbox_path}")
-            shutil.rmtree(self.sandbox_path)
-            
-        # create sandbox directory
+        sandbox_path = str(self._config.apptainer_output_dir / "apptainer_sandbox")
+        if os.path.exists(sandbox_path):
+            self.logger.info(f"Removing existing sandbox {sandbox_path}")
+            shutil.rmtree(sandbox_path)
+        
+        apptainer_output_dir = str(self._config.apptainer_output_dir)
+        # build sandbox directory
         result = subprocess.run(
-                [APPTAINER_BASH, "build", "--sandbox", self.sandbox_path, self.sif_file],
-                # cwd=str(build_dir),
+                [APPTAINER_BASH, "build", "--sandbox", "apptainer_sandbox", self.sif_file],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                cwd=apptainer_output_dir,
                 text=True
             )
         if result.returncode != 0:
             self.logger.error(f"Failed to build Apptainer sandbox image:\n{result.stderr}")
             raise RuntimeError(f"Failed to build Apptainer sandbox image: {result.stderr}")
+        
+        # add /scratch directory in container
+        if "/scratch" in apptainer_output_dir:
+            self.logger.info(f"mkdir {self._config.apptainer_output_dir} in Apptainer sandbox...")
+            result = subprocess.run(
+                    [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", f"mkdir -p {apptainer_output_dir}"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=apptainer_output_dir,
+                    text=True
+                )
+            if result.returncode != 0:
+                    self.logger.error(f"Failed to mkdir {apptainer_output_dir} in Apptainer sandbox:\n{result.stderr}")
+                    raise RuntimeError(f"Apptainer mkdir failed: {result.stderr}")
 
     async def start(self):
         """Starts the runtime."""
         self._pull_image()
-        self.sandbox_path = str(self._config.apptainer_output_dir / "apptainer_sandbox")
         self._build_image()
         
         self._hooks.on_custom_step("Starting runtime")

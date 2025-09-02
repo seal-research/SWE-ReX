@@ -157,18 +157,18 @@ class BashSession(Session):
 
     async def start(self) -> CreateBashSessionResponse:
         """Spawn the session, source any startupfiles and set the PS1."""
-        sandbox_path = getattr(self.request, 'sandbox_path', None)
-        if not sandbox_path:
-            raise ValueError("sandbox_path must be provided in the request for Apptainer.")
+        apptainer_output_dir = getattr(self.request, 'apptainer_output_dir', None)
+        if not apptainer_output_dir:
+            raise ValueError("apptainer_output_dir must be provided in the request for Apptainer.")
             
-        shell_cmd = f'{APPTAINER_BASH} exec --writable {sandbox_path} bash'
-        # shell_cmd = f'{APPTAINER_BASH} shell --writable {sandbox_path}'
+        shell_cmd = f'{APPTAINER_BASH} shell --writable apptainer_sandbox bash'
 
         self._shell = pexpect.spawn(
             shell_cmd,  # Use the Apptainer command here
             encoding="utf-8",
             codec_errors="backslashreplace",
             echo=False,
+            cwd=apptainer_output_dir,
             env=dict(os.environ.copy(), **{"PS1": self._ps1, "PS2": "", "PS0": ""}),  # type: ignore
         )
 
