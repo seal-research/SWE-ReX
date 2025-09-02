@@ -109,7 +109,7 @@ class ApptainerDeployment(AbstractDeployment):
             raise RuntimeError(f"Failed to build Apptainer sandbox image: {result.stderr}")
         
         # add /scratch directory in container
-        if "/scratch" in apptainer_output_dir:
+        if self._config.g2:
             self.logger.info(f"mkdir {self._config.apptainer_output_dir} in Apptainer sandbox...")
             result = subprocess.run(
                     [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", f"mkdir -p {apptainer_output_dir}"],
