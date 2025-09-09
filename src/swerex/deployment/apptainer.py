@@ -68,7 +68,7 @@ class ApptainerDeployment(AbstractDeployment):
                 os.remove(sif_file_check)
             # pull the image
             result = subprocess.run(
-                [APPTAINER_BASH, "pull", self.sif_file, self._config.image],
+                [APPTAINER_BASH, "pull", "--disable-cache", self.sif_file, self._config.image],
                 cwd=str(self._config.apptainer_output_dir),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -98,7 +98,7 @@ class ApptainerDeployment(AbstractDeployment):
         apptainer_output_dir = str(self._config.apptainer_output_dir)
         # build sandbox directory
         result = subprocess.run(
-                [APPTAINER_BASH, "build", "--sandbox", "apptainer_sandbox", self.sif_file],
+                [APPTAINER_BASH, "build", "--disable-cache", "--sandbox", "apptainer_sandbox", self.sif_file],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=apptainer_output_dir,
